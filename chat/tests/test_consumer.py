@@ -32,6 +32,15 @@ class TestConsumer(TransactionTestCase):
 
         assert not connected
 
+    async def test_consumer_disconnect_non_existent_room(self):
+        communicator = WebsocketCommunicator(AuthMiddlewareStack(URLRouter(websocket_urlpatterns)), "ws/chat/no_room/")
+        # Log user manually
+        communicator.scope["user"] = self.user
+
+        connected, _ = await communicator.connect()
+
+        assert not connected
+
     async def test_send_and_save_message(self):
         @sync_to_async
         def get_messages_count(room, content):
