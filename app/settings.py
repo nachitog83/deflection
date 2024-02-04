@@ -79,23 +79,19 @@ TEMPLATES = [
     },
 ]
 
+DJANGO_WEBSOCKET_THROTTLE = "1/second"
+
 WSGI_APPLICATION = "app.wsgi.application"
 ASGI_APPLICATION = "app.asgi.application"
 
-TEST_DB = {"NAME": os.path.join(BASE_DIR, "db_test.sqlite3")}
+DATABASE_URL = os.environ.get("DATABASE_URL", default="sqlite:///db.sqlite3")
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-        "TEST": TEST_DB,
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3",
+        conn_max_age=500,
+        conn_health_checks=True,
+    )
 }
-db_from_env = dj_database_url.config()
-if db_from_env:
-    DATABASES["default"].update(db_from_env)
-    DATABASES["default"]["CONN_MAX_AGE"] = 500
-    DATABASES["default"]["TEST"] = TEST_DB
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

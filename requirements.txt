@@ -5,8 +5,11 @@ channels-redis
 daphne
 dj-database-url
 Django
-gunicorn
 hiredis
 psycopg2-binary
 ipdb
 factory-boy
+pre-commit
+black
+isort
+ruff
