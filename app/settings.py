@@ -79,7 +79,7 @@ TEMPLATES = [
     },
 ]
 
-DJANGO_WEBSOCKET_THROTTLE = "1/second"
+WEBSOCKET_THROTTLE = "1/second"
 
 WSGI_APPLICATION = "app.wsgi.application"
 ASGI_APPLICATION = "app.asgi.application"
