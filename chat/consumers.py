@@ -3,7 +3,7 @@ import logging
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 
 from chat.exceptions import ThrottlingError
 from chat.services import MessageThrottler
@@ -14,12 +14,19 @@ logger = logging.getLogger("chat")
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    """
+    Chat app websocket consumer
+
+    Args:
+        AsyncWebsocketConsumer (_type_): _description_
+    """
+
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
-        self.user = self.scope["user"]
-        self.room = await self.retrieve_room(self.room_name)
+        self.user: User = self.scope["user"]
+        self.room: Room = await self.retrieve_room(self.room_name)
 
         if isinstance(self.user, AnonymousUser) or not self.room:
             await self.close()
@@ -27,6 +34,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Join room group
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+        # Instanciate Throttling control for session
         self.throttler = MessageThrottler()
 
         await self.accept()

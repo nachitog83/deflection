@@ -71,3 +71,27 @@ class TestThrottle(TransactionTestCase):
 
         # Close
         await communicator.disconnect()
+
+    @override_settings(WEBSOCKET_THROTTLE="UNLIMITED")
+    @patch("chat.consumers.logger")
+    async def test_unlimited_messages(self, mock_logger):
+        communicator = WebsocketCommunicator(
+            AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+            f"ws/chat/{self.room.slug}/",
+        )
+        # Log user manually
+        communicator.scope["user"] = self.user
+
+        connected, _ = await communicator.connect()
+
+        assert connected
+        # Test sending text
+        for x in range(15):
+            await communicator.send_json_to(str(x))
+
+        await asyncio.sleep(0.5)
+
+        assert not mock_logger.warning.called
+
+        # Close
+        await communicator.disconnect()

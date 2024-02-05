@@ -9,9 +9,27 @@ logger = logging.getLogger("chat")
 
 
 class MessageThrottler:
+    """
+    Websocket message throttle control.
+    Based con settings config, it will throttle message if limit is passed
+
+    Raises:
+        ThrottlingConfigurationError: Config format is incorrect. Should be as
+        example: "1/second", "100/minute", "100000/month". You can deactivate throttling
+        by setting config as "UNLIMITED"
+        ThrottlingError: User has passed message limit
+    """
+
     UNITS = ["year", "month", "day", "hour", "minute", "second"]
+    unlimited_messages = False
 
     def __init__(self):
+        if settings.WEBSOCKET_THROTTLE == "UNLIMITED":
+            self.unlimited_messages = True
+        else:
+            self._init_vars()
+
+    def _init_vars(self):
         amount: str = settings.WEBSOCKET_THROTTLE.split("/")[0]
         unit: str = settings.WEBSOCKET_THROTTLE.split("/")[1]
 
@@ -21,20 +39,22 @@ class MessageThrottler:
         self.amount = int(amount)
         self.unit = unit
 
-        self.set_current_time()
-        self.set_new_limit()
+        self._set_current_time()
+        self._set_new_limit()
 
-    def set_current_time(self):
-        self.now = datetime.now()
+    def _set_current_time(self):
+        self._now = datetime.now()
 
-    def set_new_limit(self):
-        self.limit = self.now + timedelta(**{self.unit + "s": 1})
-        self.count = 0
+    def _set_new_limit(self):
+        self._limit = self._now + timedelta(**{self.unit + "s": 1})
+        self._count = 0
 
     def check_throttle(self):
-        self.set_current_time()
-        if self.now < self.limit and self.count >= self.amount:
+        if self.unlimited_messages:
+            return
+        self._set_current_time()
+        if self._now < self._limit and self._count >= self.amount:
             raise ThrottlingError()
-        elif self.now >= self.limit:
-            self.set_new_limit()
-        self.count += 1
+        elif self._now >= self._limit:
+            self._set_new_limit()
+        self._count += 1

@@ -79,6 +79,7 @@ TEMPLATES = [
     },
 ]
 
+# Websocket throttling config
 WEBSOCKET_THROTTLE = "1/second"
 
 WSGI_APPLICATION = "app.wsgi.application"
