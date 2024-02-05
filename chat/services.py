@@ -21,26 +21,35 @@ class MessageThrottler:
     """
 
     UNITS = ["year", "month", "day", "hour", "minute", "second"]
+    DEFAULT = "10/second"
     unlimited_messages = False
 
     def __init__(self):
-        if settings.WEBSOCKET_THROTTLE == "UNLIMITED":
+        if settings.WEBSOCKET_THROTTLE.lower() == "unlimited":
             self.unlimited_messages = True
         else:
             self._init_vars()
 
     def _init_vars(self):
-        amount: str = settings.WEBSOCKET_THROTTLE.split("/")[0]
-        unit: str = settings.WEBSOCKET_THROTTLE.split("/")[1]
+        try:
+            amount, unit = settings.WEBSOCKET_THROTTLE.split("/")
+        except ValueError:
+            amount, unit = self.get_defaults()
 
         if not amount.isdigit() or unit not in self.UNITS:
-            raise ThrottlingConfigurationError(f"Wrong format for throttling config: {settings.WEBSOCKET_THROTTLE}")
+            amount, unit = self.get_defaults()
 
         self.amount = int(amount)
         self.unit = unit
 
         self._set_current_time()
         self._set_new_limit()
+
+    def get_defaults(self):
+        logger.warning(
+            f"Wrong format for throttling config: {settings.WEBSOCKET_THROTTLE}. Setting default {self.DEFAULT}"
+        )
+        return self.DEFAULT.split("/")
 
     def _set_current_time(self):
         self._now = datetime.now()

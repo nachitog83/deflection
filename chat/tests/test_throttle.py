@@ -72,7 +72,7 @@ class TestThrottle(TransactionTestCase):
         # Close
         await communicator.disconnect()
 
-    @override_settings(WEBSOCKET_THROTTLE="UNLIMITED")
+    @override_settings(WEBSOCKET_THROTTLE="unlimited")
     @patch("chat.consumers.logger")
     async def test_unlimited_messages(self, mock_logger):
         communicator = WebsocketCommunicator(
@@ -93,5 +93,25 @@ class TestThrottle(TransactionTestCase):
 
         assert not mock_logger.warning.called
 
+        # Close
+        await communicator.disconnect()
+
+    @override_settings(WEBSOCKET_THROTTLE="wrong_string_value")
+    @patch("chat.services.logger")
+    async def test_wrong_config(self, mock_logger):
+        communicator = WebsocketCommunicator(
+            AuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+            f"ws/chat/{self.room.slug}/",
+        )
+        # Log user manually
+        communicator.scope["user"] = self.user
+
+        connected, _ = await communicator.connect()
+
+        mock_logger.warning.assert_called_with(
+            f"Wrong format for throttling config: {settings.WEBSOCKET_THROTTLE}. Setting default 10/second"
+        )
+
+        assert connected
         # Close
         await communicator.disconnect()
