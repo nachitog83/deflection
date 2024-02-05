@@ -17,7 +17,15 @@ python manage.py collectstatic --noinput
 
 python manage.py createsuperuser --username admin --email admin@admin.com --noinput
 
-# gunicorn backend.wsgi --bind 0.0.0.0:8000 --workers 4 --threads 4
+echo "ENVIRONMENT: $ENVIRON"
 
-# for debug
-python manage.py runserver 0.0.0.0:8000
+if [ "$ENVIRON" = "prod" ]
+then
+    daphne -b 0.0.0.0 -p 8000 app.asgi:application
+elif [ "$ENVIRON" = "local" ]
+then
+    # for debug
+    python manage.py runserver 0.0.0.0:8000
+else
+    echo "NO VALID ENVIRONMENT AVAILABLE"
+fi
